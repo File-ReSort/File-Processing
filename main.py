@@ -1,20 +1,21 @@
 import spacy
-import coreferee
 import DocumentReader
-import Node
+import log
+from Node import Node, NodeEdge
 from spacy import displacy
-from spacy.pipeline import merge_entities
 from spacy.matcher import DependencyMatcher
+from spacy.pipeline import merge_entities
+import coreferee
 
-#DocText = DocumentReader.Read('ExampleData/USCODE-2020-title1.pdf')
-#DocText = DocumentReader.Read('ExampleData/story.txt')
+# DocText = DocumentReader.Read('ExampleData/USCODE-2020-title1.pdf')
+# DocText = DocumentReader.Read('ExampleData/story.txt')
 DocText = DocumentReader.Read('ExampleData/example.txt')
-#DocText = DocumentReader.Read('ExampleData/test.txt')
+# DocText = DocumentReader.Read('ExampleData/test.txt')
 
 
 
 nlp = spacy.load('en_core_web_trf')
-#Disable default NER so we can add custom, manual NER for now
+# Disable default NER so we can add custom, manual NER for now
 nlp.disable_pipes('ner')
 entityRuler = nlp.add_pipe('entity_ruler')
 nlp.add_pipe('merge_entities')
@@ -22,7 +23,7 @@ nlp.add_pipe('coreferee')
 
 print(nlp.pipe_names)
 
-#NER Start
+# NER Start
 entList = ['LEGAL ORGANIZATION', 'PERSON']
 entityRulerPatterns = [
     {"label": entList[0], "pattern": "Office of the Comptroller of the Currency"},
@@ -33,11 +34,12 @@ entityRulerPatterns = [
 entityRuler.add_patterns(entityRulerPatterns)
 
 
-#DependencyMatcher Start
+# DependencyMatcher Start
 depMatcher = DependencyMatcher(nlp.vocab)
 
+matcherPatternNames = ["CHARGED", "PERFORM"]
 matcherPatterns = [
-    #Charged Pattern
+    # Charged Pattern
     [
         {
             'RIGHT_ID': 'anchor_charged',
@@ -88,26 +90,32 @@ matcherPatterns = [
         }
     ]
 ]
-depMatcher.add("CHARGED", [matcherPatterns[0]])
-depMatcher.add("PERFORM", [matcherPatterns[1]])
+
+for x in range(len(matcherPatternNames)):
+    depMatcher.add(matcherPatternNames[x], [matcherPatterns[x]])
 
 doc = nlp(DocText)
 
 matches = depMatcher(doc)
-print(f'Found {len(matches)} matching dep patterns\n', matches)
 
+log.printSection(f'Found {len(matches)} matching dep patterns')
+print(matches)
 for match in matches:
     match_id, token_ids = match
     print('DEP Match', depMatcher.get(match_id))
     for token in token_ids:
         print(f'TOKEN MATCH:{doc[token]}')
 
+log.printSection(f'Document contains {len(doc.ents)} entities')
 for ent in doc.ents:
     print('ent:', ent.label_, ent)
 
+log.printSection(f'Document contains {len(doc)} tokens')
 for token in doc:
-    print('token:', token.i, token)
+    tokenText = token.text.replace('\n','\\n').replace('\t','\\t')
+    print('token:', token.i, tokenText)
 
+log.printSection(f'Coreferee chains')
 doc._.coref_chains.print()
 
 # [parentDocIndex: [childDocIndex,childDocIndex,...]]
@@ -125,7 +133,8 @@ nodes = []
 
 for key in chainDict.keys():
     parentIndex = chainDict[key][0]
-    nodes.append(doc[parentIndex])
+    # nodes.append(doc[parentIndex])
+
     for x in range(1, len(chainDict[key])):
         mentionDict[chainDict[key][x]] = parentIndex
 
@@ -137,18 +146,28 @@ print(mentionDict)
 mentionDictKeys = sorted(mentionDict)
 print(f'Child Keys:{mentionDictKeys}')
 
-#Check all doc entities
+log.printSection(f'Entity parent-child relations')
+# Check all doc entities
 for e in doc.ents:
-    print('Entity:', e.text, e.label_, e.start, e.end)
-    for x in range(e.start, e.end):
-        #If current token is a child of a token
-        if(x in mentionDict.keys()):
-            print('\tChild of token:', doc[x], mentionDict[x])
+    print(f'Entity:', e.text, e.label_, e.start, e.end)
 
-print(nodes)
+    for x in range(e.start, e.end):
+        # If current token is a child of a token
+        if(x in mentionDict.keys()):
+            print('\tHas parent token:', doc[x], mentionDict[x])
+        # else create a new node
+        else:
+            # THIS ASSUMES THAT ALL ENTITIES ARE UNIQUE AND NER IS 100% accurate
+            tempNode = Node(e)
+            nodes.append(tempNode)
+
+log.printSection(f'Created Nodes')
+for node in nodes:
+    print('NODE:', node.id, node.text, node.nodeEdgeOrigins)
+
+log.printSection(f'Created Edges')
+
 
 # Displacy styles ['ent', 'dep', 'span']
 # p = displacy.render(doc, style='ent')
 displacy.serve(doc, style='dep')
-
-
