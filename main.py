@@ -1,21 +1,29 @@
 import spacy
 import coreferee
 import DocumentReader
+import Node
 from spacy import displacy
-from spacy.matcher import DependencyMatcher
+from spacy.pipeline import merge_entities
 
-nlp = spacy.load('en_core_web_trf')
-nlp.add_pipe('coreferee')
 
 #DocText = DocumentReader.Read('ExampleData/USCODE-2020-title1.pdf')
 #DocText = DocumentReader.Read('ExampleData/story.txt')
 DocText = DocumentReader.Read('ExampleData/example.txt')
 #DocText = DocumentReader.Read('ExampleData/test.txt')
 
+nlp = spacy.load('en_core_web_trf')
+nlp.add_pipe('merge_entities')
+nlp.add_pipe('coreferee')
+
+print(nlp.pipe_names)
 doc = nlp(DocText)
+
+for ent in doc.ents:
+    print('ent:',ent)
+
 doc._.coref_chains.print()
 
-#[parentDocIndex: [childDocIndex,childDocIndex,...]]
+# [parentDocIndex: [childDocIndex,childDocIndex,...]]
 chainDict = {}
 
 for chain in doc._.coref_chains:
@@ -24,21 +32,37 @@ for chain in doc._.coref_chains:
         mentionIndexList.append(mention.token_indexes[0])
     chainDict[chain.index] = mentionIndexList
 
-#[childDocIndex: parentDocIndex]
+# [childDocIndex: parentDocIndex]
 mentionDict = {}
+nodes = []
 
 for key in chainDict.keys():
     parentIndex = chainDict[key][0]
+    nodes.append(doc[parentIndex])
     for x in range(1, len(chainDict[key])):
         mentionDict[chainDict[key][x]] = parentIndex
 
 del chainDict
 
-#mention dict is in format of [childDocIndex: parentDocIndex]. This will help to reduce duplicate nodes in our graph
-#when we actually start creating nodes.
+# mention dict is in format of [childDocIndex: parentDocIndex]. This will help to reduce duplicate nodes in our graph
+# when we actually start creating nodes.
 print(mentionDict)
+mentionDictKeys = sorted(mentionDict)
+print(mentionDictKeys)
 
-#Rule based matching, Matcher and DependencyMatcher
+for e in doc.ents:
+    print('Entity:', e.text, e.label_, e.start, e.end)
+    for x in range(e.start, e.end):
+        if(x in mentionDict.keys()):
+            print('\tFound child token in dict:', doc[x])
+
+print(nodes)
+
+for token in doc:
+    print('Token:', token)
+
+
+# Rule based matching, Matcher and DependencyMatcher
 # matcher = DependencyMatcher(nlp.vocab)
 #
 # patterns = [
@@ -52,8 +76,8 @@ print(mentionDict)
 #
 # print("Matches:", [doc[start:end].text for match_id, start, end in matches])
 
-#Display styles ['ent', 'dep', 'span']
-#p = displacy.render(doc, style='ent')
+# Display styles ['ent', 'dep', 'span']
+# p = displacy.render(doc, style='ent')
 displacy.serve(doc, style='ent')
 
 
