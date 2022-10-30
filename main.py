@@ -5,11 +5,12 @@ import Node
 from spacy import displacy
 from spacy.pipeline import merge_entities
 
-
 #DocText = DocumentReader.Read('ExampleData/USCODE-2020-title1.pdf')
 #DocText = DocumentReader.Read('ExampleData/story.txt')
 DocText = DocumentReader.Read('ExampleData/example.txt')
 #DocText = DocumentReader.Read('ExampleData/test.txt')
+
+
 
 nlp = spacy.load('en_core_web_trf')
 nlp.add_pipe('merge_entities')
