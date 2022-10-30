@@ -13,14 +13,31 @@ DocText = DocumentReader.Read('ExampleData/example.txt')
 
 
 nlp = spacy.load('en_core_web_trf')
+#Disable default NER so we can add custom NER
+nlp.disable_pipes('ner')
+entityRuler = nlp.add_pipe('entity_ruler')
 nlp.add_pipe('merge_entities')
 nlp.add_pipe('coreferee')
 
 print(nlp.pipe_names)
+
+entityRulerPatterns = [
+    {"label": "LEGAL ORGANIZATION", "pattern": "Office of the Comptroller of the Currency"},
+    {"label": "LEGAL ORGANIZATION", "pattern": "Department of the Treasury"},
+    {"label": "PERSON", "pattern": "Secretary of the Treasury"},
+    {"label": "PERSON", "pattern": "Comptroller of the Currency"},
+]
+
+entityRuler.add_patterns(entityRulerPatterns)
+
+
 doc = nlp(DocText)
 
 for ent in doc.ents:
     print('ent:',ent)
+
+for token in doc:
+    print('token:', token.i, token)
 
 doc._.coref_chains.print()
 
@@ -58,9 +75,6 @@ for e in doc.ents:
             print('\tFound child token in dict:', doc[x])
 
 print(nodes)
-
-for token in doc:
-    print('Token:', token)
 
 
 # Rule based matching, Matcher and DependencyMatcher
