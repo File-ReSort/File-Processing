@@ -1,7 +1,7 @@
 import spacy
 import DocumentReader
 import log
-from Node import Node, NodeEdge
+from Node import Node, NodeEdge, NodeManager
 from spacy import displacy
 from spacy.matcher import DependencyMatcher
 from spacy.pipeline import merge_entities
@@ -34,10 +34,14 @@ entityRulerPatterns = [
 entityRuler.add_patterns(entityRulerPatterns)
 
 
-# DependencyMatcher Start
+# DependencyMatcher Start (This essentially finds all node edges)
 depMatcher = DependencyMatcher(nlp.vocab)
 
-matcherPatternNames = ["CHARGED", "PERFORM"]
+
+# https://spacy.io/api/dependencymatcher
+# https://spacy.io/api/matcher
+
+matcherPatternNames = ["CHARGED", "PERFORM", "ADVISED"]
 matcherPatterns = [
     # Charged Pattern
     [
@@ -55,13 +59,13 @@ matcherPatterns = [
             'LEFT_ID': 'anchor_charged',
             'REL_OP': '>>',
             "RIGHT_ID": 'charged_verb',
-            'RIGHT_ATTRS': {'DEP': 'pcomp', 'POS': 'VERB'},
+            'RIGHT_ATTRS': {'DEP': 'pcomp', 'POS': 'VERB'}
         },
         {
             'LEFT_ID': 'charged_verb',
             'REL_OP': '>>',
             "RIGHT_ID": 'charged_verb_dobj',
-            'RIGHT_ATTRS': {'DEP': 'dobj'},
+            'RIGHT_ATTRS': {'DEP': 'dobj'}
         }
     ],
     #Perform Pattern
@@ -74,25 +78,44 @@ matcherPatterns = [
             'LEFT_ID': 'anchor_perform',
             'REL_OP': '>',
             "RIGHT_ID": 'perform_subject',
-            'RIGHT_ATTRS': {'DEP': 'nsubj'},
+            'RIGHT_ATTRS': {'DEP': 'nsubj'}
         },
         {
             'LEFT_ID': 'anchor_perform',
             'REL_OP': '>',
             "RIGHT_ID": 'perform_what',
-            'RIGHT_ATTRS': {'DEP': 'dobj'},
+            'RIGHT_ATTRS': {'DEP': 'dobj'}
         },
         {
             'LEFT_ID': 'perform_what',
             'REL_OP': '>>',
             "RIGHT_ID": 'duties_dobj',
-            'RIGHT_ATTRS': {'DEP': 'pobj'},
+            'RIGHT_ATTRS': {'DEP': 'pobj'}
+        }
+    ],
+    [
+        {
+            'RIGHT_ID': 'anchor_advised',
+            'RIGHT_ATTRS': {'ORTH': 'advised'}
+        },
+        {
+            'LEFT_ID': 'anchor_advised',
+            'REL_OP': '>',
+            "RIGHT_ID": 'advised_propn',
+            'RIGHT_ATTRS': {'DEP': 'nsubjpass'}
+        },
+        {
+            'LEFT_ID': 'anchor_advised',
+            'REL_OP': '>>',
+            "RIGHT_ID": 'advised_who',
+            'RIGHT_ATTRS': {'DEP': 'pobj'}
         }
     ]
 ]
 
 for x in range(len(matcherPatternNames)):
-    depMatcher.add(matcherPatternNames[x], [matcherPatterns[x]])
+    asdf = depMatcher.add(matcherPatternNames[x], [matcherPatterns[x]])
+    print(asdf)
 
 doc = nlp(DocText)
 
@@ -131,6 +154,9 @@ for chain in doc._.coref_chains:
 mentionDict = {}
 nodes = []
 
+nm = NodeManager()
+
+
 for key in chainDict.keys():
     parentIndex = chainDict[key][0]
     # nodes.append(doc[parentIndex])
@@ -157,16 +183,43 @@ for e in doc.ents:
             print('\tHas parent token:', doc[x], mentionDict[x])
         # else create a new node
         else:
-            # THIS ASSUMES THAT ALL ENTITIES ARE UNIQUE AND NER IS 100% accurate
+            # THIS ASSUMES THAT NER IS 100% accurate
             tempNode = Node(e)
-            nodes.append(tempNode)
+            nm.add(tempNode)
 
 log.printSection(f'Created Nodes')
-for node in nodes:
-    print('NODE:', node.id, node.text, node.nodeEdgeOrigins)
+for node in nm.getGraph():
+    print('NODE:', node.id, node.text, node.nodeEdgeOrigins, node.entityID)
 
 log.printSection(f'Created Edges')
+print(matches)
 
+for match in matches:
+    patternMatchName = nlp.vocab.strings[match[0]]
+    tokenIDs = match[1]
+
+    print(f'Match: {match}, Pattern: {patternMatchName}')
+
+    #Check to see if any tokens are a child of a parent entity.
+    for tokenID in tokenIDs:
+        print(f'{doc[tokenID]} ID: {tokenID}')
+        if tokenID in mentionDictKeys:
+            print(f'\tis child of \"{doc[mentionDict[tokenID]]}\", Parent ID:{mentionDict[tokenID]}')
+
+    if patternMatchName == 'ADVISED':
+        edgeText = doc[tokenIDs[0]]
+        node1TokenID = mentionDict[tokenIDs[1]]
+        node2TokenID = mentionDict[tokenIDs[2]]
+
+        print(f'ET: {edgeText}, N1TID: {node1TokenID}, N2TID: {node2TokenID}')
+
+        tempEdge = NodeEdge(edgeText, node2TokenID)
+
+        nm.addEdge(node1TokenID, tempEdge)
+
+log.printSection('PROCESSED NODE LIST')
+for node in nm.getGraph():
+    print(node)
 
 # Displacy styles ['ent', 'dep', 'span']
 # p = displacy.render(doc, style='ent')

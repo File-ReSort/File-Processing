@@ -10,5 +10,8 @@ python -m coreferee install en
 python -m spacy download en_core_web_lg
 python -m spacy download en_core_web_trf
 
+pip install spacy-entity-linker
+python -m spacy_entity_linker "download_knowledge_base"
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
