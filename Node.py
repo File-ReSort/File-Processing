@@ -1,4 +1,5 @@
 import uuid
+import json
 
 class NodeManager:
     def __init__(self):
@@ -21,12 +22,21 @@ class NodeManager:
     def getGraph(self):
         return self.nodeList
 
+    def serialize(self):
+        nodesSerialized = []
+        for node in self.nodeList:
+            nodesSerialized.append(node.serialize())
+
+        return {
+            'nodeList': nodesSerialized
+        }
+
 class Node:
     def __init__(self, span):
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.nodeEdgeOrigins = []
         self.text = [t.text for t in span]
-        self.entityID = span[0].i
+        self.entityID = int(span[0].i)
 
     def __repr__(self):
         return f'NODE - ID: {self.id}, Text: {self.text}, NodeEdges: {self.nodeEdgeOrigins},  TokenID: {self.entityID}'
@@ -37,6 +47,18 @@ class Node:
     def removeEdgeOrigin(self, edge):
         self.nodeEdgeOrigins.remove(edge)
 
+    def serialize(self):
+        nodeEdges = []
+        for nodeEdge in self.nodeEdgeOrigins:
+            nodeEdges.append(nodeEdge.serialize())
+
+        return {
+            'id': self.id,
+            'nodeEdgeOrigins': nodeEdges,
+            'text': self.text,
+            'entityID': self.entityID
+        }
+
 class NodeEdge:
     def __init__(self, edgeText, pointsToNodeTokenId):
         self.edgeText = edgeText
@@ -44,3 +66,9 @@ class NodeEdge:
 
     def __repr__(self):
         return f'EdgeText: {self.edgeText} ----> NodeTokenID: {self.pointsTo}'
+
+    def serialize(self):
+        return {
+            'edgeText': self.edgeText,
+            'pointsTo': self.pointsTo
+        }
