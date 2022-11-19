@@ -26,10 +26,11 @@ class NodeManager:
         nodesSerialized = []
         for node in self.nodeList:
             nodesSerialized.append(node.serialize())
+            print("Node Serialized", node.serialize())
 
-        return {
-            'nodeList': nodesSerialized
-        }
+        newObj = {"nodeList": nodesSerialized}
+        print("Return Obj", newObj)
+        return newObj
 
 class Node:
     def __init__(self, span):
@@ -39,7 +40,7 @@ class Node:
         self.entityID = int(span[0].i)
 
     def __repr__(self):
-        return f'NODE - ID: {self.id}, Text: {self.text}, NodeEdges: {self.nodeEdgeOrigins},  TokenID: {self.entityID}'
+        return f"NODE - ID: {self.id}, Text: {self.text}, NodeEdges: {self.nodeEdgeOrigins},  TokenID: {self.entityID}"
 
     def addEdgeOrigin(self, edge):
         self.nodeEdgeOrigins.append(edge)
@@ -53,22 +54,22 @@ class Node:
             nodeEdges.append(nodeEdge.serialize())
 
         return {
-            'id': self.id,
-            'nodeEdgeOrigins': nodeEdges,
-            'text': self.text,
-            'entityID': self.entityID
+            "id": self.id,
+            "nodeEdgeOrigins": nodeEdges,
+            "text": self.text,
+            "entityID": self.entityID
         }
 
 class NodeEdge:
     def __init__(self, edgeText, pointsToNodeTokenId):
-        self.edgeText = edgeText
+        self.edgeText = str(edgeText)
         self.pointsTo = pointsToNodeTokenId
 
     def __repr__(self):
-        return f'EdgeText: {self.edgeText} ----> NodeTokenID: {self.pointsTo}'
+        return f"EdgeText: {self.edgeText} ----> NodeTokenID: {self.pointsTo}"
 
     def serialize(self):
         return {
-            'edgeText': self.edgeText,
-            'pointsTo': self.pointsTo
+            "edgeText": self.edgeText,
+            "pointsTo": self.pointsTo
         }

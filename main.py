@@ -1,6 +1,7 @@
 # flask -app main run
 
-from flask import Flask, request, jsonify
+from flask import Flask, request
+import json
 import DocumentParser
 import DocumentReader
 
@@ -19,10 +20,5 @@ def df():
     document = DocumentReader.Read(document_location)
     nodeManager = DocumentParser.ProcessDocumentText(document)
 
-    print('HERERERERE', nodeManager.serialize())
-
-    result = {
-        "nodeList": nodeManager.getGraph()
-    }
-
-    return result
+    fr = nodeManager.serialize()
+    return fr
