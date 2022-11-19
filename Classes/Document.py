@@ -1,17 +1,19 @@
 from datetime import datetime
 import os
 import uuid
+import time
 from Classes import DocumentParser, DocumentReader
 
 
 class Document:
 
-    def __init__(self, documentPath):
+    def __init__(self, name, documentPath):
         self.id = str(uuid.uuid4())
         self.localDocumentPath = documentPath
-        self.FileName = os.path.basename(documentPath)
-        self.uploadDate = str(datetime.now())
-        self.lastEditDate = str(os.path.getmtime(documentPath))
+        self.name = name
+        self.fileName = os.path.basename(documentPath)
+        self.uploadDate = str(datetime.now().ctime())
+        self.lastEditDate = str(time.ctime(os.path.getmtime(documentPath)))
         self.bucketFileLocation = ''
         self.bucketJsonLocation = ''
 
@@ -24,3 +26,14 @@ class Document:
 
     def getNodeManager(self):
         return DocumentParser.ProcessDocumentText(DocumentReader.Read(self.localDocumentPath))
+
+    def getMetaData(self):
+        return {
+            'ID': self.id,
+            'Name': self.name,
+            'FileName': self.fileName,
+            'UploadDate': self.uploadDate,
+            'LastEditDate': self.lastEditDate,
+            'BucketFileLocation': self.bucketFileLocation,
+            'BucketJsonLocation': self.bucketJsonLocation
+        }
