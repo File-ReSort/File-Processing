@@ -1,5 +1,5 @@
 import uuid
-import json
+
 
 class NodeManager:
     def __init__(self):
@@ -32,6 +32,7 @@ class NodeManager:
         print("Return Obj", newObj)
         return newObj
 
+
 class Node:
     def __init__(self, span):
         self.id = str(uuid.uuid4())
@@ -59,6 +60,7 @@ class Node:
             "text": self.text,
             "entityID": self.entityID
         }
+
 
 class NodeEdge:
     def __init__(self, edgeText, pointsToNodeTokenId):

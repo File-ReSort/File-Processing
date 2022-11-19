@@ -1,9 +1,7 @@
 # flask -app main run
 
 from flask import Flask, request
-import json
-import DocumentParser
-import DocumentReader
+from Classes import Document
 
 app = Flask(__name__)
 
@@ -11,14 +9,15 @@ app = Flask(__name__)
 def hello_world():
     return 'Flask is up and running'
 
+# This route assumes that this is a new uploaded document and has never been processed before
 @app.route('/ProcessDocument', methods=['GET'])
 def df():
     args = request.args
     print(args)
     document_location = args.get('location')
 
-    document = DocumentReader.Read(document_location)
-    nodeManager = DocumentParser.ProcessDocumentText(document)
+    document = Document.Document(document_location)
+    nodeManager = document.getNodeManager()
 
-    fr = nodeManager.serialize()
-    return fr
+    result = nodeManager.serialize()
+    return result

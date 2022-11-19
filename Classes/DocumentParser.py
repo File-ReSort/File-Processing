@@ -1,11 +1,7 @@
-import spacy
-import log
-import json
-from Node import Node, NodeEdge, NodeManager
-from spacy import displacy
+import spacy, coreferee
+from Classes import log, Node
 from spacy.matcher import DependencyMatcher
-from spacy.pipeline import merge_entities
-import coreferee
+
 
 def ProcessDocumentText(DocText):
 
@@ -148,7 +144,7 @@ def ProcessDocumentText(DocText):
     mentionDict = {}
     nodes = []
 
-    nm = NodeManager()
+    nm = Node.NodeManager()
 
 
     for key in chainDict.keys():
@@ -178,7 +174,7 @@ def ProcessDocumentText(DocText):
             # else create a new node
             else:
                 # THIS ASSUMES THAT NER IS 100% accurate
-                tempNode = Node(e)
+                tempNode = Node.Node(e)
                 nm.add(tempNode)
 
     log.printSection(f'Created Nodes')
@@ -207,7 +203,7 @@ def ProcessDocumentText(DocText):
 
             print(f'ET: {edgeText}, N1TID: {node1TokenID}, N2TID: {node2TokenID}')
 
-            tempEdge = NodeEdge(edgeText, node2TokenID)
+            tempEdge = Node.NodeEdge(edgeText, node2TokenID)
 
             nm.addEdge(node1TokenID, tempEdge)
 
