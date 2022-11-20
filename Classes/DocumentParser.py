@@ -58,7 +58,7 @@ def ProcessDocumentText(DocText):
                 'RIGHT_ATTRS': {'DEP': 'dobj'}
             }
         ],
-        #Perform Pattern
+        # Perform Pattern
         [
             {
                 'RIGHT_ID': 'anchor_perform',
@@ -83,6 +83,7 @@ def ProcessDocumentText(DocText):
                 'RIGHT_ATTRS': {'DEP': 'pobj'}
             }
         ],
+        # Advised Pattern
         [
             {
                 'RIGHT_ID': 'anchor_advised',
@@ -120,12 +121,19 @@ def ProcessDocumentText(DocText):
             print(f'TOKEN MATCH:{doc[token]}')
 
     log.printSection(f'Document contains {len(doc.ents)} entities')
+    # Start finding start char and end char for entities. Will later send to front end to be displayed.
+    entCharSpans = []
     for ent in doc.ents:
-        print('ent:', ent.label_, ent)
+        print('ent:', ent.label_, ent, ent.start_char, ent.end_char, ent.label_)
+        entCharSpans.append([
+            ent.start_char,
+            ent.end_char,
+            ent.label_
+        ])
 
     log.printSection(f'Document contains {len(doc)} tokens')
     for token in doc:
-        tokenText = token.text.replace('\n','\\n').replace('\t','\\t')
+        tokenText = token.text.replace('\n', '\\n').replace('\t', '\\t')
         print('token:', token.i, tokenText)
 
     log.printSection(f'Coreferee chains')
@@ -211,7 +219,23 @@ def ProcessDocumentText(DocText):
     for node in nm.getGraph():
         print(node)
 
-    return nm
+    log.printSection('DOCUMENT OBJ')
+
+    charSpanJson = {
+        "annotations": [
+            [
+                doc.__repr__(),
+                {
+                    "entities": entCharSpans
+                }
+            ]
+        ]
+    }
+
+    log.printSection('CharSpansOut')
+    print(charSpanJson)
+
+    return nm, charSpanJson
 
 # Displacy styles ['ent', 'dep', 'span']
 

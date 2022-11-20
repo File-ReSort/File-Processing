@@ -21,7 +21,7 @@ def process_document():
     document_name = args.get('name')
 
     document = Document.Document(document_name, document_location)
-    nodeManager = document.getNodeManager()
+    nodeManager, charSpans = document.getNodeManager()
 
     # Send nodeManager.getGraph() information to Neo4j Here
 
@@ -33,4 +33,4 @@ def process_document():
 
     result = nodeManager.serialize()
     print(metaData)
-    return result
+    return charSpans

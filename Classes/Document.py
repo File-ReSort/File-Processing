@@ -37,3 +37,6 @@ class Document:
             'BucketFileLocation': self.bucketFileLocation,
             'BucketJsonLocation': self.bucketJsonLocation
         }
+
+    def getAnnotationJson(self):
+        return ''
