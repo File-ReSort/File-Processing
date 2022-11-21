@@ -17,6 +17,9 @@ class Document:
         self.bucketFileLocation = ''
         self.bucketJsonLocation = ''
 
+        self.documentParser = DocumentParser.DocumentParser((DocumentReader.Read(self.localDocumentPath)))
+        self.documentParser.ProcessDocument()
+
     def setBucketLocations(self, bucketFileLocation, bucketJsonLocation):
         self.bucketFileLocation = bucketFileLocation
         self.bucketJsonLocation = bucketJsonLocation
@@ -25,7 +28,7 @@ class Document:
         return DocumentReader.Read(self.localDocumentPath)
 
     def getNodeManager(self):
-        return DocumentParser.ProcessDocumentText(DocumentReader.Read(self.localDocumentPath))
+        return self.documentParser.getNodeManager()
 
     def getMetaData(self):
         return {
@@ -39,4 +42,4 @@ class Document:
         }
 
     def getAnnotationJson(self):
-        return ''
+        return self.documentParser.getEntCharSpanJson()
