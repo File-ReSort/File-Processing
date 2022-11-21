@@ -13,7 +13,7 @@ def hello_world():
 
 
 # This route assumes that this is a new uploaded document and has never been processed before
-@app.route('/ProcessDocument', methods=['GET'])
+@app.route('/ProcessDocument', methods=['POST'])
 def process_document():
     args = request.args
     print(args)
@@ -30,8 +30,7 @@ def process_document():
     # Send document metaData using /setDocumentMeta API
     url = ''
     metaData = document.getMetaData()
-    # requests.post(url, json=metaData)
-
+    # requests.put(url, metaData, headers={'content-type': 'text/plain'})
 
     result = {
         'nodeJson': nodeJson,

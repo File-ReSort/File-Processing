@@ -1,7 +1,8 @@
 import PyPDF2
 
+
 def Read(fileLocation):
-    #Parse fileLocation to determine extension
+    # Parse fileLocation to determine extension
     extension = fileLocation.split('.')[-1]
 
     docText = ""
