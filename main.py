@@ -1,4 +1,4 @@
-# to start web server use: flask -app main run
+# to start web server use: flask --app main run
 
 from flask import Flask, request
 from Classes import Document
