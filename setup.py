@@ -3,6 +3,7 @@ import subprocess
 from Classes import log
 
 log.printSection('Downloading Required Models')
+subprocess.check_call([sys.executable, '-m', 'coreferee', 'install', 'en'])
 subprocess.check_call([sys.executable, '-m', 'spacy', 'download', 'en_core_web_trf'])
 subprocess.check_call([sys.executable, '-m', 'spacy', 'download', 'en_core_web_lg'])
 

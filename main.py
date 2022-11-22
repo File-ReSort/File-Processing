@@ -21,6 +21,8 @@ def process_document():
     document_name = args.get('name')
 
     document = Document.Document(document_name, document_location)
+    document.processDocument()
+
     nodeJson = document.getNodeManager().serialize()
 
 
@@ -41,6 +43,8 @@ def get_annotations():
     document_name = args.get('name')
 
     document = Document.Document(document_name, document_location)
+    document.processDocument()
+
     annotationJson = document.getAnnotationJson()
 
     return annotationJson

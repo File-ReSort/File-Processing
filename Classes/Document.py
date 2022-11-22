@@ -18,8 +18,9 @@ class Document:
         self.bucketJsonLocation = ''
 
         self.documentParser = DocumentParser.DocumentParser((DocumentReader.Read(self.localDocumentPath)))
-        self.documentParser.ProcessDocument()
 
+    def processDocument(self):
+        self.documentParser.ProcessDocument()
     def setBucketLocations(self, bucketFileLocation, bucketJsonLocation):
         self.bucketFileLocation = bucketFileLocation
         self.bucketJsonLocation = bucketJsonLocation
