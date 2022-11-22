@@ -22,7 +22,6 @@ def process_document():
 
     document = Document.Document(document_name, document_location)
     nodeJson = document.getNodeManager().serialize()
-    annotationJson = document.getAnnotationJson()
 
 
     # Send nodeManager.getGraph() information to Neo4j Here
@@ -32,8 +31,16 @@ def process_document():
     metaData = document.getMetaData()
     # requests.put(url, metaData, headers={'content-type': 'text/plain'})
 
-    result = {
-        'nodeJson': nodeJson,
-        'annotationJson': annotationJson
-    }
-    return result
+    return nodeJson
+
+@app.route('/getAnnotations', methods=['GET'])
+def process_document():
+    args = request.args
+    print(args)
+    document_location = args.get('location')
+    document_name = args.get('name')
+
+    document = Document.Document(document_name, document_location)
+    annotationJson = document.getAnnotationJson()
+
+    return annotationJson
