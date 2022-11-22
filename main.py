@@ -34,7 +34,7 @@ def process_document():
     return nodeJson
 
 @app.route('/getAnnotations', methods=['GET'])
-def process_document():
+def get_annotations():
     args = request.args
     print(args)
     document_location = args.get('location')
