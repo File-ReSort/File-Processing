@@ -4,14 +4,11 @@ File ReSort is an application that uses
 
 ## Installation
 
-Download [python](https://www.python.org/downloads/) and the package manager [pip](https://pip.pypa.io/en/stable/). Before running the application you must follow the spaCy install directions from [spaCy.io](https://spacy.io/usage)
-python -m pip install coreferee
-python -m coreferee install en
-python -m spacy download en_core_web_lg
-python -m spacy download en_core_web_trf
-
-pip install spacy-entity-linker
-python -m spacy_entity_linker "download_knowledge_base"
-
+Download and install [Python](https://www.python.org/downloads/) and the package manager [Pip](https://pip.pypa.io/en/stable/).
+<br/>
+Once installed, run the setup.py file with the command
+```python setup.py```
+<br/>
+After a successful setup, you can run the application with the command ```flask --app run main```
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
