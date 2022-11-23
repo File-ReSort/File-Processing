@@ -11,7 +11,7 @@ class DocumentParser:
 
     def ProcessDocument(self):
         nlp = spacy.load('en_core_web_trf')
-        # Disable default NER so we can add custom, manual NER for now
+        # Disable default NER, so we can add a custom, manual NER for now
         nlp.disable_pipes('ner')
         entityRuler = nlp.add_pipe('entity_ruler')
         nlp.add_pipe('merge_entities')
