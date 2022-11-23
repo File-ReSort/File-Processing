@@ -27,6 +27,14 @@ def process_document():
 
 
     # Send nodeManager.getGraph() information to Neo4j Here
+@app.route('/graphToNeo4j', methods=['GET'])
+def graph_to_neo4j():
+    authenticate("bolt://localhost:7687", "neo4j", "neo4j")
+    neo4jUrl = os.environ.get('NEO4J_URL', "bolt://localhost:7687/db/data/")
+    graph = Graph(neo4jUrl, secure=False)
+    graph.run("CREATE CONSTRAINT ON (q:Question) ASSERT q.id IS UNIQUE;")
+    apiUrl = "/TrainingData/annotations.json"
+    json = requests.get(apiUrl, headers={"accept": "application/json"}).json()
 
     # Send document metaData using /setDocumentMeta API
     url = ''
