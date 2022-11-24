@@ -4,7 +4,7 @@ File ReSort is an application that uses spaCy NLP to process documents, which th
 
 ## Installation
 
-Download and install [Python](https://www.python.org/downloads/) and the package manager [Pip](https://pip.pypa.io/en/stable/).
+Download and install [Python v3.10+](https://www.python.org/downloads/) and the package manager [Pip](https://pip.pypa.io/en/stable/).
 <br/>
 Once installed, run the setup.py file with the command
 ```python setup.py```
