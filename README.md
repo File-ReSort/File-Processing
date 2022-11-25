@@ -14,3 +14,7 @@ After a successful setup, you can run the application with the command ```flask 
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## Docker
+
+To build the docker image run:  '''docker build --tag file-processing .'''
