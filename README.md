@@ -17,4 +17,5 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ## Docker
 
-To build the docker image run:  '''docker build --tag file-processing .'''
+To build the docker image run: ```docker build --tag file-processing .``` in main directory
+See  ```docker run ``` for more info on running
