@@ -6,42 +6,48 @@ import requests
 
 app = Flask(__name__)
 
-
 @app.route('/')
 def hello_world():
+    # neo4j = Neo4j.App(url, username, password)
+    # neo4j.createNode(432, 'Duck', 1, "Bird")
+    # neo4j.createNode(433, 'Dog', 2, "Mammal")
+    #
+    # # Node 1 --> Node 2
+    # neo4j.createRelationship(432, 433, "Dislikes")
+    # neo4j.close()
+
     return 'Flask is up and running'
 
+url = 'neo4j+s://515235ac.databases.neo4j.io'
+username = 'neo4j'
+password = 'LYa5ggSL44lY23MF0A2RgRn6cCuo976Pes1OAVGw1dw'
 
 # This route assumes that this is a new uploaded document and has never been processed before
-@app.route('/ProcessDocument', methods=['POST'])
+@app.route('/processDocument', methods=['POST'])
 def process_document():
     args = request.args
-    print(args)
     document_location = args.get('location')
     document_name = args.get('name')
+    n4jUrl = args.get('url')
+    n4jUsername = args.get('username')
+    n4jPassword = args.get('password')
 
     document = Document.Document(document_name, document_location)
     document.processDocument()
 
-    nodeJson = document.getNodeManager().serialize()
+    nodeManager = document.getNodeManager()
+    # send node manager data to neo4j
+    nodeManager.toNeo4j(n4jUrl, n4jUsername, n4jPassword)
 
+    nodeJson = nodeManager.serialize()
+    annotations = document.getAnnotationJson()
 
-    # Send nodeManager.getGraph() information to Neo4j Here
-@app.route('/graphToNeo4j', methods=['GET'])
-def graph_to_neo4j():
-    authenticate("bolt://localhost:7687", "neo4j", "neo4j")
-    neo4jUrl = os.environ.get('NEO4J_URL', "bolt://localhost:7687/db/data/")
-    graph = Graph(neo4jUrl, secure=False)
-    graph.run("CREATE CONSTRAINT ON (q:Question) ASSERT q.id IS UNIQUE;")
-    apiUrl = "/TrainingData/annotations.json"
-    json = requests.get(apiUrl, headers={"accept": "application/json"}).json()
+    tempObj = {
+        "NodeJson": nodeJson,
+        "Annotations": annotations
+    }
 
-    # Send document metaData using /setDocumentMeta API
-    url = ''
-    metaData = document.getMetaData()
-    # requests.put(url, metaData, headers={'content-type': 'text/plain'})
-
-    return nodeJson
+    return tempObj
 
 @app.route('/getAnnotations', methods=['GET'])
 def get_annotations():

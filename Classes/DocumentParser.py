@@ -20,7 +20,7 @@ class DocumentParser:
         print(nlp.pipe_names)
 
         # NER Start
-        entList = ['LEGAL ORGANIZATION', 'PERSON']
+        entList = ['LEGAL_ORGANIZATION', 'PERSON']
         entityRulerPatterns = [
             {"label": entList[0], "pattern": "Office of the Comptroller of the Currency"},
             {"label": entList[0], "pattern": "Department of the Treasury"},
@@ -178,6 +178,7 @@ class DocumentParser:
         log.printSection(f'Entity parent-child relations')
         # Check all doc entities
         for e in self.doc.ents:
+            print(e)
             print(f'Entity:', e.text, e.label_, e.start, e.end)
 
             for x in range(e.start, e.end):
@@ -187,7 +188,7 @@ class DocumentParser:
                 # else create a new node
                 else:
                     # THIS ASSUMES THAT NER IS 100% accurate
-                    tempNode = Node.Node(e)
+                    tempNode = Node.Node(e, e.start, e.end, e.label_)
                     nm.add(tempNode)
 
         log.printSection(f'Created Nodes')

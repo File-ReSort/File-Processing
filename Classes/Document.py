@@ -16,11 +16,11 @@ class Document:
         self.lastEditDate = str(time.ctime(os.path.getmtime(documentPath)))
         self.bucketFileLocation = ''
         self.bucketJsonLocation = ''
-
         self.documentParser = DocumentParser.DocumentParser((DocumentReader.Read(self.localDocumentPath)))
 
     def processDocument(self):
         self.documentParser.ProcessDocument()
+
     def setBucketLocations(self, bucketFileLocation, bucketJsonLocation):
         self.bucketFileLocation = bucketFileLocation
         self.bucketJsonLocation = bucketJsonLocation
