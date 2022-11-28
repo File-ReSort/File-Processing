@@ -8,19 +8,10 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-    # neo4j = Neo4j.App(url, username, password)
-    # neo4j.createNode(432, 'Duck', 1, "Bird")
-    # neo4j.createNode(433, 'Dog', 2, "Mammal")
-    #
-    # # Node 1 --> Node 2
-    # neo4j.createRelationship(432, 433, "Dislikes")
-    # neo4j.close()
-
-    return 'Flask is up and running'
-
-url = 'neo4j+s://515235ac.databases.neo4j.io'
-username = 'neo4j'
-password = 'LYa5ggSL44lY23MF0A2RgRn6cCuo976Pes1OAVGw1dw'
+    api_url = "https://cr8qhi8bu6.execute-api.us-east-1.amazonaws.com/prod/rules"
+    result = requests.get(url=api_url).json()
+    return result
+    # return 'Flask is up and running'
 
 # This route assumes that this is a new uploaded document and has never been processed before
 @app.route('/processDocument', methods=['POST'])
