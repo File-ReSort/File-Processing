@@ -1,17 +1,14 @@
 # to start web server use: flask --app main run
 
 from flask import Flask, request
-from Classes import Document
-import requests
+from Classes import Document, Rules
 
 app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-    api_url = "https://cr8qhi8bu6.execute-api.us-east-1.amazonaws.com/prod/rules"
-    result = requests.get(url=api_url).json()
-    return result
-    # return 'Flask is up and running'
+    Rules.RuleManager("https://cr8qhi8bu6.execute-api.us-east-1.amazonaws.com/prod/rules")
+    return 'Flask is up and running'
 
 # This route assumes that this is a new uploaded document and has never been processed before
 @app.route('/processDocument', methods=['POST'])
