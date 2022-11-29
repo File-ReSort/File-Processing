@@ -89,13 +89,13 @@ class NodeManager:
                         self.nodeDict[rule.relationship] = tempRuleNode
                         self.nodeList.append(tempRuleNode)
                         print("CREATED RELATIONSHIP NODE", tempRuleNode)
-                        print("CURRENT NODES DICT", self.nodeDict)
-                        print("CURRENT NODES List", self.nodeList)
 
                     #ELSE GET THE RELATIONSHIP NODES ENTITYID AND CONTINUE
                     elif self.nodeDict.get(rule.relationship) is not None:
                         chosenNode = self.nodeDict.get(rule.relationship)
                         print("FOUND EXISTING RELATIONSHIP NODE", chosenNode)
+                        tempRuleNode = chosenNode
+
                     # CREATE EDGE TO THE RELATIONSHIP NODE
                     node.addEdgeOrigin(NodeEdge(rule.rule, tempRuleNode.EntityID))
 
