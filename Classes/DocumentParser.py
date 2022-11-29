@@ -20,12 +20,14 @@ class DocumentParser:
         print(nlp.pipe_names)
 
         # NER Start
-        entList = ['LEGAL_ORGANIZATION', 'PERSON']
+        entList = ['LEGAL_ORGANIZATION', 'PERSON', 'CONCEPT']
         entityRulerPatterns = [
             {"label": entList[0], "pattern": "Office of the Comptroller of the Currency"},
             {"label": entList[0], "pattern": "Department of the Treasury"},
+            {"label": entList[0], "pattern": "federal"},
             {"label": entList[1], "pattern": "Secretary of the Treasury"},
             {"label": entList[1], "pattern": "Comptroller of the Currency"},
+            {"label": entList[2], "pattern": "commerce"}
         ]
         entityRuler.add_patterns(entityRulerPatterns)
 
