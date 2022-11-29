@@ -24,6 +24,7 @@ def process_document():
     document.processDocument()
 
     nodeManager = document.getNodeManager()
+    nodeManager.applyRules()
     # send node manager data to neo4j
     nodeManager.toNeo4j(n4jUrl, n4jUsername, n4jPassword)
 

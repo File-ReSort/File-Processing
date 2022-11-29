@@ -1,10 +1,12 @@
 import uuid
-from Classes import Neo4j
+from Classes import Neo4j, Rules
 
 
 class NodeManager:
     def __init__(self):
         self.nodeList = []
+        # Key is node.text
+        self.nodeDict = {}
 
     def add(self, Node):
         self.nodeList.append(Node)
@@ -39,15 +41,27 @@ class NodeManager:
 
         # create all nodes
         for node in self.nodeList:
-            neo4j.createNode(node.id, node.text[0], node.entityID, node.label)
-            # if node has relationships add to list
-            if len(node.nodeEdgeOrigins) > 0:
-                for edge in node.nodeEdgeOrigins:
-                    relationships.append({
-                        "node1EntID": node.entityID,
-                        "node2EntID": edge.pointsTo,
-                        "relationshipText": edge.edgeText
-                    })
+            if isinstance(node, Node):
+                neo4j.createNode(node.id, node.text[0], node.entityID, node.label)
+                # if node has relationships add to list
+                if len(node.nodeEdgeOrigins) > 0:
+                    for edge in node.nodeEdgeOrigins:
+                        relationships.append({
+                            "node1EntID": node.entityID,
+                            "node2EntID": edge.pointsTo,
+                            "relationshipText": edge.edgeText
+                        })
+
+            if isinstance(node, RuleNode):
+                neo4j.createNode(-1, node.text, node.EntityID, "Rule")
+                # if node has relationships add to list
+                if len(node.nodeEdgeOrigins) > 0:
+                    for edge in node.nodeEdgeOrigins:
+                        relationships.append({
+                            "node1EntID": node.EntityID,
+                            "node2EntID": edge.pointsTo,
+                            "relationshipText": edge.edgeText
+                        })
 
         print('RELATIONSHIPS ------------------', relationships)
         # create relationships between nodes
@@ -58,9 +72,42 @@ class NodeManager:
                 relationship["relationshipText"])
 
         neo4j.close()
+        return 'success'
+
+    def applyRules(self):
+        ruleManager = Rules.RuleManager("https://cr8qhi8bu6.execute-api.us-east-1.amazonaws.com/prod/rules")
+        for node in self.nodeList:
+            # If node text matches with a rule(s) "Word", apply all rules to the node
+            if ruleManager.getRules().get(node.text[0]) is not None:
+                print("FOUND MATCHING NODE TEXT WITH A RULE'S WORD", node.text[0])
+                for rule in ruleManager.getRules().get(node.text[0]):
+                    print("ON RULE,", rule)
+                    tempRuleNode = RuleNode(rule.relationship)
+
+                    # SEE IF THE RULE'S RELATIONSHIP NODE EXISTS, if not create relationship node and add to dict
+                    if self.nodeDict.get(rule.relationship) is None:
+                        self.nodeDict[rule.relationship] = tempRuleNode
+                        self.nodeList.append(tempRuleNode)
+                        print("CREATED RELATIONSHIP NODE", tempRuleNode)
+                        print("CURRENT NODES DICT", self.nodeDict)
+                        print("CURRENT NODES List", self.nodeList)
+
+                    #ELSE GET THE RELATIONSHIP NODES ENTITYID AND CONTINUE
+                    elif self.nodeDict.get(rule.relationship) is not None:
+                        chosenNode = self.nodeDict.get(rule.relationship)
+                        print("FOUND EXISTING RELATIONSHIP NODE", chosenNode)
+                    # CREATE EDGE TO THE RELATIONSHIP NODE
+                    node.addEdgeOrigin(NodeEdge(rule.rule, tempRuleNode.EntityID))
+
+    def nodeListToDict(self):
+        dict = {}
+        for node in self.nodeList:
+            dict[node.text[0]] = node
+        self.nodeDict = dict
 
 
 class Node:
+
     def __init__(self, span, start, end, label):
         self.id = str(uuid.uuid4())
         self.nodeEdgeOrigins = []
@@ -92,6 +139,34 @@ class Node:
             "label": self.label,
             "start": self.start,
             "end": self.end
+        }
+
+
+class RuleNode:
+
+    def __init__(self, text):
+        self.EntityID = str(uuid.uuid4())
+        self.nodeEdgeOrigins = []
+        self.text = text
+
+    def __repr__(self):
+        return f"NODE - EntityID: {self.EntityID}, Text: {self.text}, NodeEdges: {self.nodeEdgeOrigins}"
+
+    def addEdgeOrigin(self, edge):
+        self.nodeEdgeOrigins.append(edge)
+
+    def removeEdgeOrigin(self, edge):
+        self.nodeEdgeOrigins.remove(edge)
+
+    def serialize(self):
+        nodeEdges = []
+        for nodeEdge in self.nodeEdgeOrigins:
+            nodeEdges.append(nodeEdge.serialize())
+
+        return {
+            "id": self.EntityID,
+            "nodeEdgeOrigins": nodeEdges,
+            "text": self.text
         }
 
 

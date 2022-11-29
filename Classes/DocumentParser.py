@@ -225,6 +225,8 @@ class DocumentParser:
         for node in nm.getGraph():
             print(node)
 
+        nm.nodeListToDict()
+
         self.entityCharSpans = entCharSpans
         self.nodeManager = nm
 
