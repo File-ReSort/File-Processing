@@ -15,15 +15,13 @@ class Document:
         self.uploadDate = str(datetime.now().ctime())
         self.lastEditDate = str(time.ctime(os.path.getmtime(documentPath)))
         self.bucketFileLocation = ''
-        self.bucketJsonLocation = ''
         self.documentParser = DocumentParser.DocumentParser((DocumentReader.Read(self.localDocumentPath)))
 
     def processDocument(self):
         self.documentParser.ProcessDocument()
 
-    def setBucketLocations(self, bucketFileLocation, bucketJsonLocation):
+    def setBucketFileLocation(self, bucketFileLocation):
         self.bucketFileLocation = bucketFileLocation
-        self.bucketJsonLocation = bucketJsonLocation
 
     def readDocument(self):
         return DocumentReader.Read(self.localDocumentPath)
@@ -38,9 +36,11 @@ class Document:
             'FileName': self.fileName,
             'UploadDate': self.uploadDate,
             'LastEditDate': self.lastEditDate,
-            'BucketFileLocation': self.bucketFileLocation,
-            'BucketJsonLocation': self.bucketJsonLocation
+            'BucketFileLocation': self.bucketFileLocation
         }
 
     def getAnnotationJson(self):
         return self.documentParser.getEntCharSpanJson()
+
+    def deleteFile(self):
+        os.remove(self.localDocumentPath)
