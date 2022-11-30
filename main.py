@@ -35,6 +35,7 @@ def process_document():
     file = request.files['file']
     file.stream.seek(0)
     saveLocation = f'TempUploads/{file.filename}'
+
     file.save(saveLocation)
     n4jUrl = args.get('url')
     n4jUsername = args.get('username')

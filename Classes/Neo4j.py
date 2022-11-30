@@ -25,6 +25,22 @@ class App:
         result = tx.run(query, node_ID=nodeID, node_Text=nodeText, node_entID=entityID)
         return result
 
+    def createNodesFromList(self, nodes):
+        #build query
+        query = ""
+        for node in nodes:
+            query += node.getCypherCreationQuery()
+
+        print("TRYING QUERY", query)
+        with self.driver.session(database="neo4j") as session:
+            result = session.execute_write(self._create_nodes_from_list, query)
+            print("SUCCESSFULLY CREATED NODES FROM LIST")
+
+    @staticmethod
+    def _create_nodes_from_list(tx, query):
+        result = tx.run(query)
+        return result
+
     def createRelationship(self, node1EntID, nodeEnt2ID, relationshipText):
         with self.driver.session(database="neo4j") as session:
             result = session.execute_write(self._create_relationship, node1EntID, nodeEnt2ID, relationshipText)
@@ -34,9 +50,21 @@ class App:
     def _create_relationship(tx, node1EntID, nodeEnt2ID, relationshipText):
         query = (
             "MATCH (e1), (e2) "
-            "WHERE e1.EntityID=$node1_ID AND e2.EntityID=$node2_ID "
-            f"CREATE (e1)-[r:{relationshipText}]->(e2) "
-            "RETURN type(r) "
+            f"WHERE e1.EntityID=\"{node1EntID}\" AND e2.EntityID=\"{nodeEnt2ID}\" "
+            f"CREATE (e1)-[r:{relationshipText}]->(e2); "
         )
-        result = tx.run(query, node1_ID=node1EntID, node2_ID=nodeEnt2ID)
+        print("TRIED QUERY:\n", query)
+        result = tx.run(query)
+        return result
+
+    def createRelationshipsFromList(self, relationshipList):
+
+        with self.driver.session(database="neo4j") as session:
+            for relationship in relationshipList:
+                session.execute_write(self._create_relationship_from_list, relationship.getCypherRelationshipQuery())
+            print("SUCCESSFULLY CREATED RELATIONSHIPS FROM LIST")
+
+    @staticmethod
+    def _create_relationship_from_list(tx, query):
+        result = tx.run(query)
         return result
