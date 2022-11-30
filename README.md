@@ -9,7 +9,7 @@ Download and install [Python v3.10+](https://www.python.org/downloads/) and the 
 Once installed, run the setup.py file with the command
 ```python setup.py```
 <br/>
-After a successful setup, you can run the application with the command ```flask --app run main```
+After a successful setup, you can run the application with the command ```python main.py```
 
 ## Contributing
 

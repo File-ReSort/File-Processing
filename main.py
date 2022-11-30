@@ -1,9 +1,13 @@
 # to start web server use: flask --app main run
+# https://nagasudhir.blogspot.com/2022/10/waitress-as-flask-server-wsgi.html
 
+import time
 from flask import Flask, request
 from Classes import Document
+from waitress import serve
 import requests
 import json
+import os
 
 app = Flask(__name__)
 
@@ -21,8 +25,11 @@ def test_func():
 # This route assumes that this is a new uploaded document and has never been processed before
 @app.route('/processDocument', methods=['POST'])
 def process_document():
+    start_time = time.time()
     # check dynamo db to see if document exists and implement logic TODO
 
+    if not os.path.exists('TempUploads'):
+        os.makedirs('TempUploads')
     # save file locally
     args = request.args
     file = request.files['file']
@@ -71,6 +78,7 @@ def process_document():
     # delete local file
     document.deleteFile()
 
+    print("--- %s seconds ---" % (time.time() - start_time))
     return tempObj
 
 @app.route('/getAnnotations', methods=['GET'])
@@ -86,3 +94,6 @@ def get_annotations():
     annotationJson = document.getAnnotationJson()
 
     return annotationJson
+
+if __name__ == '__main__':
+    serve(app, host='0.0.0.0', port=50100, threads=1, url_prefix="/processor")

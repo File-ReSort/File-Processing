@@ -15,5 +15,6 @@ subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-U', 'pip', 'set
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-U', 'spacy'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'PyPDF2'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'neo4j'])
+subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'waitress'])
 
 print("\nSetup complete, You can now run the application with the command\nflask --app main run")
