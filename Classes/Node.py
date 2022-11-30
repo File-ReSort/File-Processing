@@ -13,13 +13,13 @@ class NodeManager:
 
     def remove(self, nodeTokenID):
         for x in range(len(self.nodeList)):
-            if self.nodeList[x].entityID == nodeTokenID:
+            if self.nodeList[x].EntityID == nodeTokenID:
                 self.nodeList.remove(self.nodeList[x])
 
     def addEdge(self, node1TokenID, edge):
         #find node 1
         for x in range(len(self.nodeList)):
-            if self.nodeList[x].entityID == node1TokenID:
+            if self.nodeList[x].EntityID == node1TokenID:
                 self.nodeList[x].addEdgeOrigin(edge)
 
     def getGraph(self):
@@ -41,35 +41,17 @@ class NodeManager:
 
         # create all nodes
         for node in self.nodeList:
-            if isinstance(node, Node):
-                neo4j.createNode(node.id, node.text[0], node.entityID, node.label)
-                # if node has relationships add to list
-                if len(node.nodeEdgeOrigins) > 0:
-                    for edge in node.nodeEdgeOrigins:
-                        relationships.append({
-                            "node1EntID": node.entityID,
-                            "node2EntID": edge.pointsTo,
-                            "relationshipText": edge.edgeText
-                        })
+            # if node has relationships add to list
+            if len(node.nodeEdgeOrigins) > 0:
+                for edge in node.nodeEdgeOrigins:
+                    relationships.append(Relationship(node.EntityID, edge.pointsTo, edge.edgeText))
 
-            if isinstance(node, RuleNode):
-                neo4j.createNode(-1, node.text, node.EntityID, "Rule")
-                # if node has relationships add to list
-                if len(node.nodeEdgeOrigins) > 0:
-                    for edge in node.nodeEdgeOrigins:
-                        relationships.append({
-                            "node1EntID": node.EntityID,
-                            "node2EntID": edge.pointsTo,
-                            "relationshipText": edge.edgeText
-                        })
+        #Create Nodes
+        neo4j.createNodesFromList(self.nodeList)
 
-        print('RELATIONSHIPS ------------------', relationships)
+        print('CREATING RELATIONSHIPS')
         # create relationships between nodes
-        for relationship in relationships:
-            neo4j.createRelationship(
-                relationship["node1EntID"],
-                relationship["node2EntID"],
-                relationship["relationshipText"])
+        neo4j.createRelationshipsFromList(relationships)
 
         neo4j.close()
         return 'success'
@@ -112,13 +94,13 @@ class Node:
         self.id = str(uuid.uuid4())
         self.nodeEdgeOrigins = []
         self.text = [t.text for t in span]
-        self.entityID = int(span[0].i)
+        self.EntityID = int(span[0].i)
         self.start = start
         self.end = end
         self.label = label
 
     def __repr__(self):
-        return f"NODE - ID: {self.id}, Text: {self.text}, NodeEdges: {self.nodeEdgeOrigins},  TokenID: {self.entityID}, Label {self.label}"
+        return f"NODE - ID: {self.id}, Text: {self.text}, NodeEdges: {self.nodeEdgeOrigins},  TokenID: {self.EntityID}, Label {self.label}"
 
     def addEdgeOrigin(self, edge):
         self.nodeEdgeOrigins.append(edge)
@@ -135,11 +117,14 @@ class Node:
             "id": self.id,
             "nodeEdgeOrigins": nodeEdges,
             "text": self.text,
-            "entityID": self.entityID,
+            "entityID": self.EntityID,
             "label": self.label,
             "start": self.start,
             "end": self.end
         }
+
+    def getCypherCreationQuery(self):
+        return f"CREATE (:{self.label}"" {"f" ID: \"{self.id}\", Text: \"{self.text}\", EntityID: \"{self.EntityID}\""" }) "
 
 
 class RuleNode:
@@ -169,6 +154,9 @@ class RuleNode:
             "text": self.text
         }
 
+    def getCypherCreationQuery(self):
+        return "CREATE (:Rule {"f" ID: -1, Text: \"{self.text}\", EntityID: \"{self.EntityID}\""" }) "
+
 
 class NodeEdge:
     def __init__(self, edgeText, pointsToNodeTokenId):
@@ -183,3 +171,15 @@ class NodeEdge:
             "edgeText": self.edgeText,
             "pointsTo": self.pointsTo
         }
+
+class Relationship:
+    def __init__(self, node1EntID, node2EntID, relationshipText):
+        self.node1EntID = node1EntID
+        self.node2EntID = node2EntID
+        self.relationshipText = relationshipText
+
+
+    def getCypherRelationshipQuery(self):
+        e1 = "e" + str(uuid.uuid4()).replace('-', '')
+        e2 = "e" + str(uuid.uuid4()).replace('-', '')
+        return f"MATCH ({e1}), ({e2}) "f"WHERE {e1}.EntityID=\"{self.node1EntID}\" AND {e2}.EntityID=\"{self.node2EntID}\" "f"CREATE ({e1})-[:{self.relationshipText}]->({e2}) "

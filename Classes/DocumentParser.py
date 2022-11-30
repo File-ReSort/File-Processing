@@ -195,7 +195,7 @@ class DocumentParser:
 
         log.printSection(f'Created Nodes')
         for node in nm.getGraph():
-            print('NODE:', node.id, node.text, node.nodeEdgeOrigins, node.entityID)
+            print('NODE:', node.id, node.text, node.nodeEdgeOrigins, node.EntityID)
 
         log.printSection(f'Created Edges')
         print(matches)
