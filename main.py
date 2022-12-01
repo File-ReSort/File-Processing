@@ -3,7 +3,7 @@
 
 import time
 from flask import Flask, request
-from Classes import Document
+from Classes import Document, log
 from waitress import serve
 import requests
 import json
@@ -44,6 +44,7 @@ def process_document():
     document = Document.Document(file.filename, saveLocation)
     document.processDocument()
 
+    log.printSection("Uploading File to Bucket")
     # upload file to bucket here
     bucketUrl = f"https://file-resort-storage.s3.amazonaws.com/{document.id}-{file.filename}"
     response = requests.put(bucketUrl, data=open(saveLocation, 'rb'))
@@ -52,6 +53,8 @@ def process_document():
 
     nodeManager = document.getNodeManager()
     nodeManager.applyRules()
+
+    log.printSection("Sending Node Data to Neo4j")
     # send node manager data to neo4j
     nodeManager.toNeo4j(n4jUrl, n4jUsername, n4jPassword)
 
@@ -71,6 +74,7 @@ def process_document():
         "Annotations": annotations["annotations"]
     }
 
+    log.printSection("Sending Document Data to Dynamo")
     url = "https://cr8qhi8bu6.execute-api.us-east-1.amazonaws.com/prod/document"
     response = requests.post(url, data=json.dumps(tempObj), headers={"content-type": "application/json"})
     print("RESPONSE:", response.headers, response.text)
@@ -96,4 +100,8 @@ def get_annotations():
     return annotationJson
 
 if __name__ == '__main__':
+    with open('misc/ascii-art.txt') as f:
+        print(f.read())
+    print("Initiating Flask app...")
     serve(app, host='0.0.0.0', port=50100, threads=1, url_prefix="/processor")
+
