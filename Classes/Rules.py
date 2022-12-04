@@ -2,37 +2,32 @@ import requests
 
 class RuleManager:
     def __init__(self, api_url):
-        self.ruleDict = self.pullRules(api_url)
+        self.ruleDict = self.pull_rules(api_url)
 
-    def addRule(self, rule):
-        self.ruleList.append(rule)
-
-    def removeRule(self, rule):
-        self.ruleList.remove(rule)
-
-    def getRules(self):
+    def get_rules(self):
         return self.ruleDict
 
-    def pullRules(self, api_url):
+    def pull_rules(self, api_url):
         dict = {}
         result = requests.get(url=api_url).json()
 
         for rule in result:
-            tempRule = Rule(rule["Rule"], rule["ruleID"], rule["Relationship"], rule["Word"])
+            temp_rule = Rule(rule["Rule"], rule["ruleID"], rule["Relationship"], rule["Word"])
 
             # if key already exists, then append to existing key
-            if dict.get(tempRule.word) is not None:
-                print(f"On Rule {tempRule.word}, Appending", tempRule)
-                ruleList = dict.get(tempRule.word)
-                ruleList.append(tempRule)
-                dict[tempRule.word] = ruleList
+            if dict.get(temp_rule.word) is not None:
+                print(f"On Rule {temp_rule.word}, Appending", temp_rule)
+                rule_list = dict.get(temp_rule.word)
+                rule_list.append(temp_rule)
+                dict[temp_rule.word] = rule_list
             # else create a new key
-            elif dict.get(tempRule.word) is None:
-                print(f"Creating New Rule {tempRule.word}")
-                dict[tempRule.word] = [tempRule]
+            elif dict.get(temp_rule.word) is None:
+                print(f"Creating New Rule {temp_rule.word}")
+                dict[temp_rule.word] = [temp_rule]
 
         print("PULLED RULES", dict)
         return dict
+
 
 class Rule:
     def __init__(self, rule, ruleID, relationship, word):

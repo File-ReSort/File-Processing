@@ -7,21 +7,24 @@ from Classes import DocumentParser, DocumentReader
 
 class Document:
 
-    def __init__(self, name, documentPath):
+    def __init__(self, name, document_path):
         self.id = str(uuid.uuid4())
-        self.localDocumentPath = documentPath
+        self.localDocumentPath = document_path
         self.name = name
-        self.fileName = os.path.basename(documentPath)
+        self.fileName = os.path.basename(document_path)
         self.uploadDate = str(datetime.now().ctime())
-        self.lastEditDate = str(time.ctime(os.path.getmtime(documentPath)))
+        self.lastEditDate = str(time.ctime(os.path.getmtime(document_path)))
         self.bucketFileLocation = ''
         self.documentParser = DocumentParser.DocumentParser((DocumentReader.Read(self.localDocumentPath)))
 
     def processDocument(self):
         self.documentParser.ProcessDocument()
 
-    def setBucketFileLocation(self, bucketFileLocation):
-        self.bucketFileLocation = bucketFileLocation
+    def processDocumentOnlyAnnotations(self):
+        self.documentParser.processForAnnotations()
+
+    def setBucketFileLocation(self, bucket_file_location):
+        self.bucketFileLocation = bucket_file_location
 
     def readDocument(self):
         return DocumentReader.Read(self.localDocumentPath)

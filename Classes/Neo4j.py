@@ -1,6 +1,4 @@
 from neo4j import GraphDatabase
-import logging
-from neo4j.exceptions import ServiceUnavailable
 
 class App:
 
@@ -53,7 +51,6 @@ class App:
             f"WHERE e1.EntityID=\"{node1EntID}\" AND e2.EntityID=\"{nodeEnt2ID}\" "
             f"CREATE (e1)-[r:{relationshipText}]->(e2); "
         )
-        print("TRIED QUERY:\n", query)
         result = tx.run(query)
         return result
 

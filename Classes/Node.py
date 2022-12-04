@@ -8,32 +8,32 @@ class NodeManager:
         # Key is node.text
         self.nodeDict = {}
 
-    def add(self, Node):
-        self.nodeList.append(Node)
+    def add(self, node):
+        self.nodeList.append(node)
 
-    def remove(self, nodeTokenID):
+    def remove(self, node_token_ID):
         for x in range(len(self.nodeList)):
-            if self.nodeList[x].EntityID == nodeTokenID:
+            if self.nodeList[x].EntityID == node_token_ID:
                 self.nodeList.remove(self.nodeList[x])
 
-    def addEdge(self, node1TokenID, edge):
+    def addEdge(self, node1_token_ID, edge):
         #find node 1
         for x in range(len(self.nodeList)):
-            if self.nodeList[x].EntityID == node1TokenID:
+            if self.nodeList[x].EntityID == node1_token_ID:
                 self.nodeList[x].addEdgeOrigin(edge)
 
     def getGraph(self):
         return self.nodeList
 
     def serialize(self):
-        nodesSerialized = []
+        nodes_serialized = []
         for node in self.nodeList:
-            nodesSerialized.append(node.serialize())
+            nodes_serialized.append(node.serialize())
             print("Node Serialized", node.serialize())
 
-        newObj = {"nodeList": nodesSerialized}
-        print("Return Obj", newObj)
-        return newObj
+        new_obj = {"nodeList": nodes_serialized}
+        print("Return Obj", new_obj)
+        return new_obj
 
     def toNeo4j(self, url, username, password):
         neo4j = Neo4j.App(url, username, password)
@@ -46,7 +46,7 @@ class NodeManager:
                 for edge in node.nodeEdgeOrigins:
                     relationships.append(Relationship(node.EntityID, edge.pointsTo, edge.edgeText))
 
-        #Create Nodes
+        # Create Nodes
         neo4j.createNodesFromList(self.nodeList)
 
         print('CREATING RELATIONSHIPS')
@@ -56,30 +56,30 @@ class NodeManager:
         neo4j.close()
         return 'success'
 
-    def applyRules(self):
-        ruleManager = Rules.RuleManager("https://cr8qhi8bu6.execute-api.us-east-1.amazonaws.com/prod/rules")
+    def applyRules(self, dbUrl):
+        rule_manager = Rules.RuleManager(dbUrl)
         for node in self.nodeList:
             # If node text matches with a rule(s) "Word", apply all rules to the node
-            if ruleManager.getRules().get(node.text[0]) is not None:
+            if rule_manager.get_rules().get(node.text[0]) is not None:
                 print("FOUND MATCHING NODE TEXT WITH A RULE'S WORD", node.text[0])
-                for rule in ruleManager.getRules().get(node.text[0]):
+                for rule in rule_manager.get_rules().get(node.text[0]):
                     print("ON RULE,", rule)
-                    tempRuleNode = RuleNode(rule.relationship)
+                    temp_rule_node = RuleNode(rule.relationship)
 
                     # SEE IF THE RULE'S RELATIONSHIP NODE EXISTS, if not create relationship node and add to dict
                     if self.nodeDict.get(rule.relationship) is None:
-                        self.nodeDict[rule.relationship] = tempRuleNode
-                        self.nodeList.append(tempRuleNode)
-                        print("CREATED RELATIONSHIP NODE", tempRuleNode)
+                        self.nodeDict[rule.relationship] = temp_rule_node
+                        self.nodeList.append(temp_rule_node)
+                        print("CREATED RELATIONSHIP NODE", temp_rule_node)
 
-                    #ELSE GET THE RELATIONSHIP NODES ENTITYID AND CONTINUE
+                    # ELSE GET THE RELATIONSHIP NODES ENTITYID AND CONTINUE
                     elif self.nodeDict.get(rule.relationship) is not None:
                         chosenNode = self.nodeDict.get(rule.relationship)
                         print("FOUND EXISTING RELATIONSHIP NODE", chosenNode)
-                        tempRuleNode = chosenNode
+                        temp_rule_node = chosenNode
 
                     # CREATE EDGE TO THE RELATIONSHIP NODE
-                    node.addEdgeOrigin(NodeEdge(rule.rule, tempRuleNode.EntityID))
+                    node.addEdgeOrigin(NodeEdge(rule.rule, temp_rule_node.EntityID))
 
     def nodeListToDict(self):
         dict = {}
@@ -109,13 +109,13 @@ class Node:
         self.nodeEdgeOrigins.remove(edge)
 
     def serialize(self):
-        nodeEdges = []
+        node_edges = []
         for nodeEdge in self.nodeEdgeOrigins:
-            nodeEdges.append(nodeEdge.serialize())
+            node_edges.append(nodeEdge.serialize())
 
         return {
             "id": self.id,
-            "nodeEdgeOrigins": nodeEdges,
+            "nodeEdgeOrigins": node_edges,
             "text": self.text,
             "entityID": self.EntityID,
             "label": self.label,
@@ -144,13 +144,13 @@ class RuleNode:
         self.nodeEdgeOrigins.remove(edge)
 
     def serialize(self):
-        nodeEdges = []
+        node_edges = []
         for nodeEdge in self.nodeEdgeOrigins:
-            nodeEdges.append(nodeEdge.serialize())
+            node_edges.append(nodeEdge.serialize())
 
         return {
             "id": self.EntityID,
-            "nodeEdgeOrigins": nodeEdges,
+            "nodeEdgeOrigins": node_edges,
             "text": self.text
         }
 
@@ -159,9 +159,9 @@ class RuleNode:
 
 
 class NodeEdge:
-    def __init__(self, edgeText, pointsToNodeTokenId):
-        self.edgeText = str(edgeText)
-        self.pointsTo = pointsToNodeTokenId
+    def __init__(self, edge_text, points_to_node_token_ID):
+        self.edgeText = str(edge_text)
+        self.pointsTo = points_to_node_token_ID
 
     def __repr__(self):
         return f"EdgeText: {self.edgeText} ----> NodeTokenID: {self.pointsTo}"
@@ -173,10 +173,10 @@ class NodeEdge:
         }
 
 class Relationship:
-    def __init__(self, node1EntID, node2EntID, relationshipText):
-        self.node1EntID = node1EntID
-        self.node2EntID = node2EntID
-        self.relationshipText = relationshipText
+    def __init__(self, node1_ent_ID, node2_ent_ID, relationship_text):
+        self.node1EntID = node1_ent_ID
+        self.node2EntID = node2_ent_ID
+        self.relationshipText = relationship_text
 
 
     def getCypherRelationshipQuery(self):

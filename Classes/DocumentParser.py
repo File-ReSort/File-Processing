@@ -1,4 +1,5 @@
-import spacy, coreferee
+import spacy
+import coreferee
 from Classes import log, Node
 from spacy.matcher import DependencyMatcher
 
@@ -13,33 +14,32 @@ class DocumentParser:
         nlp = spacy.load('en_core_web_trf')
         # Disable default NER, so we can add a custom, manual NER for now
         nlp.disable_pipes('ner')
-        entityRuler = nlp.add_pipe('entity_ruler')
+        entity_ruler = nlp.add_pipe('entity_ruler')
         nlp.add_pipe('merge_entities')
         nlp.add_pipe('coreferee')
 
         print(nlp.pipe_names)
 
         # NER Start
-        entList = ['LEGAL_ORGANIZATION', 'PERSON', 'CONCEPT']
-        entityRulerPatterns = [
-            {"label": entList[0], "pattern": "Office of the Comptroller of the Currency"},
-            {"label": entList[0], "pattern": "Department of the Treasury"},
-            {"label": entList[0], "pattern": "federal"},
-            {"label": entList[1], "pattern": "Secretary of the Treasury"},
-            {"label": entList[1], "pattern": "Comptroller of the Currency"},
-            {"label": entList[2], "pattern": "commerce"}
+        ent_list = ['LEGAL_ORGANIZATION', 'PERSON', 'CONCEPT']
+        entity_ruler_patterns = [
+            {"label": ent_list[0], "pattern": "Office of the Comptroller of the Currency"},
+            {"label": ent_list[0], "pattern": "Department of the Treasury"},
+            {"label": ent_list[0], "pattern": "federal"},
+            {"label": ent_list[1], "pattern": "Secretary of the Treasury"},
+            {"label": ent_list[1], "pattern": "Comptroller of the Currency"},
+            {"label": ent_list[2], "pattern": "commerce"}
         ]
-        entityRuler.add_patterns(entityRulerPatterns)
-
+        entity_ruler.add_patterns(entity_ruler_patterns)
 
         # DependencyMatcher Start (This essentially finds all node edges)
-        depMatcher = DependencyMatcher(nlp.vocab)
+        dep_matcher = DependencyMatcher(nlp.vocab)
 
         # https://spacy.io/api/dependencymatcher
         # https://spacy.io/api/matcher
 
-        matcherPatternNames = ["CHARGED", "PERFORM", "ADVISED"]
-        matcherPatterns = [
+        matcher_pattern_names = ["CHARGED", "PERFORM", "ADVISED"]
+        matcher_patterns = [
             # Charged Pattern
             [
                 {
@@ -111,28 +111,27 @@ class DocumentParser:
             ]
         ]
 
-        for x in range(len(matcherPatternNames)):
-            asdf = depMatcher.add(matcherPatternNames[x], [matcherPatterns[x]])
-            print(asdf)
+        for x in range(len(matcher_pattern_names)):
+            dep_matcher.add(matcher_pattern_names[x], [matcher_patterns[x]])
 
         self.doc = nlp(self.docText)
 
-        matches = depMatcher(self.doc)
+        matches = dep_matcher(self.doc)
 
         log.printSection(f'Found {len(matches)} matching dep patterns')
         print(matches)
         for match in matches:
             match_id, token_ids = match
-            print('DEP Match', depMatcher.get(match_id))
+            print('DEP Match', dep_matcher.get(match_id))
             for token in token_ids:
                 print(f'TOKEN MATCH:{self.doc[token]}')
 
         log.printSection(f'Document contains {len(self.doc.ents)} entities')
         # Start finding start char and end char for entities. Will later send to front end to be displayed.
-        entCharSpans = []
+        ent_char_spans = []
         for ent in self.doc.ents:
             print('ent:', ent.label_, ent, ent.start_char, ent.end_char, ent.label_)
-            entCharSpans.append([
+            ent_char_spans.append([
                 ent.start_char,
                 ent.end_char,
                 ent.label_
@@ -140,42 +139,39 @@ class DocumentParser:
 
         log.printSection(f'Document contains {len(self.doc)} tokens')
         for token in self.doc:
-            tokenText = token.text.replace('\n', '\\n').replace('\t', '\\t')
-            print('token:', token.i, tokenText)
+            token_text = token.text.replace('\n', '\\n').replace('\t', '\\t')
+            print('token:', token.i, token_text)
 
         log.printSection(f'Coreferee chains')
         self.doc._.coref_chains.print()
 
         # [parentDocIndex: [childDocIndex,childDocIndex,...]]
-        chainDict = {}
+        chain_dict = {}
 
         for chain in self.doc._.coref_chains:
             mentionIndexList = []
             for mention in chain:
                 mentionIndexList.append(mention.token_indexes[0])
-            chainDict[chain.index] = mentionIndexList
+            chain_dict[chain.index] = mentionIndexList
 
         # [childDocIndex: parentDocIndex]
-        mentionDict = {}
-        nodes = []
+        mention_dict = {}
 
         nm = Node.NodeManager()
 
+        for key in chain_dict.keys():
+            parent_index = chain_dict[key][0]
 
-        for key in chainDict.keys():
-            parentIndex = chainDict[key][0]
-            # nodes.append(self.doc[parentIndex])
+            for x in range(1, len(chain_dict[key])):
+                mention_dict[chain_dict[key][x]] = parent_index
 
-            for x in range(1, len(chainDict[key])):
-                mentionDict[chainDict[key][x]] = parentIndex
-
-        del chainDict
+        del chain_dict
 
         # mention dict is in format of [childDocIndex: parentDocIndex]. This will help to reduce duplicate nodes in our graph
         # when we actually start creating nodes.
-        print(mentionDict)
-        mentionDictKeys = sorted(mentionDict)
-        print(f'Child Keys:{mentionDictKeys}')
+        print(mention_dict)
+        mention_dict_keys = sorted(mention_dict)
+        print(f'Child Keys:{mention_dict_keys}')
 
         log.printSection(f'Entity parent-child relations')
         # Check all doc entities
@@ -185,8 +181,8 @@ class DocumentParser:
 
             for x in range(e.start, e.end):
                 # If current token is a child of a token
-                if(x in mentionDict.keys()):
-                    print('\tHas parent token:', self.doc[x], mentionDict[x])
+                if(x in mention_dict.keys()):
+                    print('\tHas parent token:', self.doc[x], mention_dict[x])
                 # else create a new node
                 else:
                     # THIS ASSUMES THAT NER IS 100% accurate
@@ -201,27 +197,27 @@ class DocumentParser:
         print(matches)
 
         for match in matches:
-            patternMatchName = nlp.vocab.strings[match[0]]
+            pattern_match_name = nlp.vocab.strings[match[0]]
             tokenIDs = match[1]
 
-            print(f'Match: {match}, Pattern: {patternMatchName}')
+            print(f'Match: {match}, Pattern: {pattern_match_name}')
 
             #Check to see if any tokens are a child of a parent entity.
             for tokenID in tokenIDs:
                 print(f'{self.doc[tokenID]} ID: {tokenID}')
-                if tokenID in mentionDictKeys:
-                    print(f'\tis child of \"{self.doc[mentionDict[tokenID]]}\", Parent ID:{mentionDict[tokenID]}')
+                if tokenID in mention_dict_keys:
+                    print(f'\tis child of \"{self.doc[mention_dict[tokenID]]}\", Parent ID:{mention_dict[tokenID]}')
 
-            if patternMatchName == 'ADVISED':
-                edgeText = self.doc[tokenIDs[0]]
-                node1TokenID = mentionDict[tokenIDs[1]]
-                node2TokenID = mentionDict[tokenIDs[2]]
+            if pattern_match_name == 'ADVISED':
+                edge_text = self.doc[tokenIDs[0]]
+                node1_token_id = mention_dict[tokenIDs[1]]
+                node2_token_id = mention_dict[tokenIDs[2]]
 
-                print(f'ET: {edgeText}, N1TID: {node1TokenID}, N2TID: {node2TokenID}')
+                print(f'ET: {edge_text}, N1TID: {node1_token_id}, N2TID: {node2_token_id}')
 
-                tempEdge = Node.NodeEdge(edgeText, node2TokenID)
+                temp_edge = Node.NodeEdge(edge_text, node2_token_id)
 
-                nm.addEdge(node1TokenID, tempEdge)
+                nm.addEdge(node1_token_id, temp_edge)
 
         log.printSection('PROCESSED NODE LIST')
         for node in nm.getGraph():
@@ -229,19 +225,45 @@ class DocumentParser:
 
         nm.nodeListToDict()
 
-        self.entityCharSpans = entCharSpans
+        self.entityCharSpans = ent_char_spans
         self.nodeManager = nm
 
-        # Displacy styles ['ent', 'dep', 'span']
+    def processForAnnotations(self):
+        nlp = spacy.load('en_core_web_trf')
+        # Disable default NER, so we can add a custom, manual NER for now
+        nlp.disable_pipes('ner')
+        entity_ruler = nlp.add_pipe('entity_ruler')
+        nlp.add_pipe('merge_entities')
 
-        # f = open('displacyOutput.html', 'w')
-        # f.write(displacy.render(self.doc, style='ent'))
-        # f.close()
-        #
-        # displacy.serve(self.doc, style='ent')
+        # NER Start
+        ent_list = ['LEGAL_ORGANIZATION', 'PERSON', 'CONCEPT']
+        entity_ruler_patterns = [
+            {"label": ent_list[0], "pattern": "Office of the Comptroller of the Currency"},
+            {"label": ent_list[0], "pattern": "Department of the Treasury"},
+            {"label": ent_list[0], "pattern": "federal"},
+            {"label": ent_list[1], "pattern": "Secretary of the Treasury"},
+            {"label": ent_list[1], "pattern": "Comptroller of the Currency"},
+            {"label": ent_list[2], "pattern": "commerce"}
+        ]
+        entity_ruler.add_patterns(entity_ruler_patterns)
+
+        self.doc = nlp(self.docText)
+
+        log.printSection(f'Document contains {len(self.doc.ents)} entities')
+        # Start finding start char and end char for entities. Will later send to front end to be displayed.
+        ent_char_spans = []
+        for ent in self.doc.ents:
+            print('ent:', ent.label_, ent, ent.start_char, ent.end_char, ent.label_)
+            ent_char_spans.append([
+                ent.start_char,
+                ent.end_char,
+                ent.label_
+            ])
+
+        self.entityCharSpans = ent_char_spans
 
     def getEntCharSpanJson(self):
-        charSpanJson = {
+        char_span_json = {
             "annotations": [
                 [
                     self.doc.__repr__(),
@@ -252,7 +274,7 @@ class DocumentParser:
             ]
         }
 
-        return charSpanJson
+        return char_span_json
 
     def getNodeManager(self):
         return self.nodeManager

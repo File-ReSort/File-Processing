@@ -11,9 +11,11 @@ import os
 
 app = Flask(__name__)
 
+
 @app.route('/')
 def hello_world():
     return 'Flask is up and running'
+
 
 @app.route('/test', methods=['POST'])
 def test_func():
@@ -22,82 +24,104 @@ def test_func():
     file.save(f'TempUploads/{file.filename}')
     return 'Success'
 
+
 # This route assumes that this is a new uploaded document and has never been processed before
 @app.route('/processDocument', methods=['POST'])
 def process_document():
+    print("Received /processDocument request")
     start_time = time.time()
+    args = request.args
+    n4j_url = args.get('url')
+    n4j_username = args.get('username')
+    n4j_password = args.get('password')
+    friendly_name = args.get('name')
     # check dynamo db to see if document exists and implement logic TODO
 
+    # save file locally
     if not os.path.exists('TempUploads'):
         os.makedirs('TempUploads')
-    # save file locally
-    args = request.args
     file = request.files['file']
     file.stream.seek(0)
-    saveLocation = f'TempUploads/{file.filename}'
+    save_location = f'TempUploads/{file.filename}'
+    file.save(save_location)
 
-    file.save(saveLocation)
-    n4jUrl = args.get('url')
-    n4jUsername = args.get('username')
-    n4jPassword = args.get('password')
-
-    document = Document.Document(file.filename, saveLocation)
+    document = Document.Document(friendly_name, save_location)
     document.processDocument()
 
-    log.printSection("Uploading File to Bucket")
     # upload file to bucket here
-    bucketUrl = f"https://file-resort-storage.s3.amazonaws.com/{document.id}-{file.filename}"
-    response = requests.put(bucketUrl, data=open(saveLocation, 'rb'))
+    log.printSection("Uploading File to Bucket")
+    bucket_url = f"https://file-resort-storage.s3.amazonaws.com/{document.id}-{file.filename}"
+    response = requests.put(bucket_url, data=open(save_location, 'rb'))
     print("RESPONSE:", response.headers, response.text)
-    document.setBucketFileLocation(bucketUrl)
+    document.setBucketFileLocation(bucket_url)
 
-    nodeManager = document.getNodeManager()
-    nodeManager.applyRules()
+    # apply rules from ruledb
+    rule_db_url = "https://cr8qhi8bu6.execute-api.us-east-1.amazonaws.com/prod/rules"
+    node_manager = document.getNodeManager()
+    node_manager.applyRules(rule_db_url)
 
-    log.printSection("Sending Node Data to Neo4j")
     # send node manager data to neo4j
-    nodeManager.toNeo4j(n4jUrl, n4jUsername, n4jPassword)
+    log.printSection("Sending Node Data to Neo4j")
+    node_manager.toNeo4j(n4j_url, n4j_username, n4j_password)
 
-    # nodeJson = nodeManager.serialize()
     annotations = document.getAnnotationJson()
-    metaData = document.getMetaData()
+    meta_data = document.getMetaData()
 
-    print("META DATA:\n", metaData)
-
-    tempObj = {
-        "BucketFileLocation": metaData['BucketFileLocation'],
-        "FileName": metaData['FileName'],
-        "ID": metaData['ID'],
-        "LastEditDate": metaData['LastEditDate'],
-        "Name": metaData['Name'],
-        "UploadDate": metaData['UploadDate'],
+    temp_obj = {
+        "BucketFileLocation": meta_data['BucketFileLocation'],
+        "FileName": meta_data['FileName'],
+        "ID": meta_data['ID'],
+        "LastEditDate": meta_data['LastEditDate'],
+        "Name": meta_data['Name'],
+        "UploadDate": meta_data['UploadDate'],
         "Annotations": annotations["annotations"]
     }
 
+    # send processed document data to Dynamo
     log.printSection("Sending Document Data to Dynamo")
     url = "https://cr8qhi8bu6.execute-api.us-east-1.amazonaws.com/prod/document"
-    response = requests.post(url, data=json.dumps(tempObj), headers={"content-type": "application/json"})
+    response = requests.post(url, data=json.dumps(temp_obj), headers={"content-type": "application/json"})
     print("RESPONSE:", response.headers, response.text)
 
     # delete local file
     document.deleteFile()
 
-    print("--- %s seconds ---" % (time.time() - start_time))
-    return tempObj
+    log.printSection("Returning")
+    print(temp_obj)
 
-@app.route('/getAnnotations', methods=['GET'])
+    print("---Time Elapsed: %s seconds ---" % (time.time() - start_time))
+    return temp_obj
+
+
+# this endpoint processes document text and only returns annotation data
+@app.route('/getAnnotations', methods=['POST'])
 def get_annotations():
-    args = request.args
-    print(args)
-    document_location = args.get('location')
-    document_name = args.get('name')
+    print("Received /getAnnotations request")
+    start_time = time.time()
 
-    document = Document.Document(document_name, document_location)
-    document.processDocument()
+    if not os.path.exists('TempUploads'):
+        os.makedirs('TempUploads')
 
-    annotationJson = document.getAnnotationJson()
+    # save file locally
+    file = request.files['file']
+    file.stream.seek(0)
+    save_location = f'TempUploads/{file.filename}'
+    file.save(save_location)
 
-    return annotationJson
+    document = Document.Document("temp", save_location)
+    document.processDocumentOnlyAnnotations()
+
+    annotation_json = document.getAnnotationJson()
+
+    # delete local file
+    document.deleteFile()
+
+    log.printSection("Returning")
+    print(annotation_json)
+
+    print("---Time Elapsed: %s seconds ---" % (time.time() - start_time))
+    return annotation_json
+
 
 if __name__ == '__main__':
     with open('misc/ascii-art.txt') as f:
