@@ -17,8 +17,8 @@ class Document:
         self.bucketFileLocation = ''
         self.documentParser = DocumentParser.DocumentParser((DocumentReader.Read(self.localDocumentPath)))
 
-    def processDocument(self):
-        self.documentParser.ProcessDocument()
+    def processDocument(self, annotations):
+        self.documentParser.ProcessDocument(annotations)
 
     def processDocumentOnlyAnnotations(self):
         self.documentParser.processForAnnotations()

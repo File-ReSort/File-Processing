@@ -1,7 +1,6 @@
 from neo4j import GraphDatabase
 
 class App:
-
     def __init__(self, uri, user, password):
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
 
@@ -24,7 +23,7 @@ class App:
         return result
 
     def createNodesFromList(self, nodes):
-        #build query
+        # build query
         query = ""
         for node in nodes:
             query += node.getCypherCreationQuery()
@@ -55,7 +54,6 @@ class App:
         return result
 
     def createRelationshipsFromList(self, relationshipList):
-
         with self.driver.session(database="neo4j") as session:
             for relationship in relationshipList:
                 session.execute_write(self._create_relationship_from_list, relationship.getCypherRelationshipQuery())

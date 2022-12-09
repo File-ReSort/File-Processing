@@ -35,6 +35,7 @@ def process_document():
     n4j_username = args.get('username')
     n4j_password = args.get('password')
     friendly_name = args.get('name')
+    annotations = json.loads(request.form['annotations'])
     # check dynamo db to see if document exists and implement logic TODO
 
     # save file locally
@@ -46,7 +47,7 @@ def process_document():
     file.save(save_location)
 
     document = Document.Document(friendly_name, save_location)
-    document.processDocument()
+    document.processDocument(annotations)
 
     # upload file to bucket here
     log.printSection("Uploading File to Bucket")
@@ -127,5 +128,5 @@ if __name__ == '__main__':
     with open('misc/ascii-art.txt') as f:
         print(f.read())
     print("Initiating Flask app...")
-    serve(app, host='0.0.0.0', port=50100, threads=1, url_prefix="/processor")
+    serve(app, host='0.0.0.0', port=50100, threads=4, url_prefix="/processor")
 

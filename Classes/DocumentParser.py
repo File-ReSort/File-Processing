@@ -10,7 +10,7 @@ class DocumentParser:
         self.entityCharSpans = None
         self.nodeManager = None
 
-    def ProcessDocument(self):
+    def ProcessDocument(self, annotations):
         nlp = spacy.load('en_core_web_trf')
         # Disable default NER, so we can add a custom, manual NER for now
         nlp.disable_pipes('ner')
@@ -20,16 +20,19 @@ class DocumentParser:
 
         print(nlp.pipe_names)
 
-        # NER Start
-        ent_list = ['LEGAL_ORGANIZATION', 'PERSON', 'CONCEPT']
-        entity_ruler_patterns = [
-            {"label": ent_list[0], "pattern": "Office of the Comptroller of the Currency"},
-            {"label": ent_list[0], "pattern": "Department of the Treasury"},
-            {"label": ent_list[0], "pattern": "federal"},
-            {"label": ent_list[1], "pattern": "Secretary of the Treasury"},
-            {"label": ent_list[1], "pattern": "Comptroller of the Currency"},
-            {"label": ent_list[2], "pattern": "commerce"}
-        ]
+        annotation_dict = {}
+        for annotation in annotations:
+            print("ANNOTATION", annotation)
+            annotation_dict[annotation['text']] = annotation['tag']
+
+        entity_ruler_patterns = []
+        for key in annotation_dict.keys():
+            temp_obj = {
+                "label": annotation_dict[key],
+                "pattern": key
+            }
+            entity_ruler_patterns.append(temp_obj)
+
         entity_ruler.add_patterns(entity_ruler_patterns)
 
         # DependencyMatcher Start (This essentially finds all node edges)
@@ -230,8 +233,6 @@ class DocumentParser:
 
     def processForAnnotations(self):
         nlp = spacy.load('en_core_web_trf')
-        # Disable default NER, so we can add a custom, manual NER for now
-        nlp.disable_pipes('ner')
         entity_ruler = nlp.add_pipe('entity_ruler')
         nlp.add_pipe('merge_entities')
 
