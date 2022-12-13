@@ -5,6 +5,7 @@ from Classes import log
 log.printSection('Installing packages')
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-Iv', '-U', 'spacy==3.4.3'])
+subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-Iv', '-U', 'flask-cors==3.0.10'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-Iv', 'flask==2.2.2'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-U', 'pip', 'setuptools', 'wheel'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-Iv', 'PyPDF2==2.10.9'])

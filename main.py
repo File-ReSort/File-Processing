@@ -3,6 +3,7 @@
 
 import time
 from flask import Flask, request
+from flask_cors import CORS
 from Classes import Document, log
 from waitress import serve
 import requests
@@ -10,7 +11,7 @@ import json
 import os
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.route('/')
 def hello_world():
@@ -41,6 +42,8 @@ def process_document():
     # save file locally
     if not os.path.exists('TempUploads'):
         os.makedirs('TempUploads')
+
+    log.printSection("Saving file")
     file = request.files['file']
     file.stream.seek(0)
     save_location = f'TempUploads/{file.filename}'
@@ -103,6 +106,7 @@ def get_annotations():
     if not os.path.exists('TempUploads'):
         os.makedirs('TempUploads')
 
+    log.printSection("Saving file")
     # save file locally
     file = request.files['file']
     file.stream.seek(0)
