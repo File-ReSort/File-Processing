@@ -264,7 +264,13 @@ class DocumentParser:
         self.entityCharSpans = ent_char_spans
 
     def getEntCharSpanJson(self):
+        ent_list = []
+        for entity in self.doc.ents:
+            if entity.label_ not in ent_list:
+                ent_list.append(entity.label_)
+
         char_span_json = {
+            "classes": ent_list,
             "annotations": [
                 [
                     self.doc.__repr__(),
